@@ -5,3 +5,10 @@ __pycache__/
 venv/         
 dist/
 .DS_Store
+
+
+.env
+.evn
+backend/.env
+backend/.evn
+*.env
