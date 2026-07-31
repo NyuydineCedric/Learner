@@ -17,11 +17,6 @@ class NoteCreate(BaseModel):
 
 @router.get("/notes")
 def list_notes(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
-    return db.query(models.Note).filter(models.Note.student_id == user.id).order_by(models.Note.created_at.desc()).all()
-
-
-@router.get("/notes")
-def list_notes(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     notes = db.query(models.Note).filter(models.Note.student_id == user.id).order_by(models.Note.created_at.desc()).all()
     return [{"id": n.id, "course_name": n.course_name, "content": n.content, "created_at": n.created_at} for n in notes]
 
@@ -36,9 +31,44 @@ def add_note(payload: NoteCreate, db: Session = Depends(get_db), user: models.Us
 
 
 # ---------- Conversations / Messages ----------
+class SendMessageRequest(BaseModel):
+    text: str
+
+
+@router.get("/conversations")
+def list_conversations(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    conversations = (
+        db.query(models.Conversation)
+        .join(models.ConversationParticipant, models.ConversationParticipant.conversation_id == models.Conversation.id)
+        .filter(models.ConversationParticipant.user_id == user.id)
+        .all()
+    )
+
+    result = []
+    for convo in conversations:
+        last_message = (
+            db.query(models.Message.text)
+            .filter(models.Message.conversation_id == convo.id)
+            .order_by(models.Message.created_at.desc())
+            .limit(1)
+            .scalar()
+        )
+        result.append({
+            "id": convo.id,
+            "name": convo.name,
+            "last_message": last_message or "",
+        })
+    return result
+
+
 @router.get("/conversations/{conversation_id}/messages")
-def get_messages(conversation_id: str, db: Session = Depends(get_db)):
-    messages = db.query(models.Message).filter(models.Message.conversation_id == conversation_id).order_by(models.Message.created_at).all()
+def get_messages(conversation_id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    messages = (
+        db.query(models.Message)
+        .filter(models.Message.conversation_id == conversation_id)
+        .order_by(models.Message.created_at)
+        .all()
+    )
     return [{"id": m.id, "sender_id": m.sender_id, "text": m.text, "created_at": m.created_at} for m in messages]
 
 
@@ -49,31 +79,6 @@ def send_message(conversation_id: str, payload: SendMessageRequest, db: Session 
     db.commit()
     db.refresh(message)
     return {"id": message.id, "sender_id": message.sender_id, "text": message.text, "created_at": message.created_at}
-
-@router.get("/conversations/{conversation_id}/messages")
-def get_messages(conversation_id: str, db: Session = Depends(get_db)):
-    return (
-        db.query(models.Message)
-        .filter(models.Message.conversation_id == conversation_id)
-        .order_by(models.Message.created_at)
-        .all()
-    )
-
-
-class SendMessageRequest(BaseModel):
-    text: str
-
-
-@router.post("/conversations/{conversation_id}/messages")
-def send_message(
-    conversation_id: str, payload: SendMessageRequest,
-    db: Session = Depends(get_db), user: models.User = Depends(get_current_user),
-):
-    message = models.Message(conversation_id=conversation_id, sender_id=user.id, text=payload.text)
-    db.add(message)
-    db.commit()
-    db.refresh(message)
-    return message
 
 
 # ---------- Notifications ----------

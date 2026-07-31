@@ -1,0 +1,12 @@
+#installing virtual environment
+#python -m venv name-of-virtual-env
+
+streamlit
+fastapi
+uvicorn
+#pip install -r requirement.txt
+langchain
+langchain-google-genai
+python_dotenv
+langchain_community
+gTTS

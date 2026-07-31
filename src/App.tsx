@@ -26,7 +26,7 @@ import StudentsPage from "./pages/StudentsPage";
 import TeacherAssignmentsPage from "./pages/TeacherAssignmentsPage";
 import TeacherQuizzesPage from "./pages/TeacherQuizzesPage";
 import QuestionBankPage from "./pages/QuestionBankPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import AnalyticsPage from "./pages/AnalyticsPAge";
 import AnnouncementsPage from "./pages/AnnouncementsPage";
 
 const App: React.FC = () => {
@@ -58,6 +58,14 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute allow={["student"]}>
               <AssignmentDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/assignments/:assignmentId/ai-tutor"
+          element={
+            <ProtectedRoute allow={["student"]}>
+              <AITutorPage />
             </ProtectedRoute>
           }
         />
